@@ -1,0 +1,94 @@
+apiVersion: blueprints.cloud.google.com/v1alpha1
+kind: BlueprintMetadata
+metadata:
+  name: marketing-ai-agency
+  annotations:
+    config.kubernetes.io/local-config: "true"
+spec:
+  info:
+    title: Marketing AI Agency
+    version: 0.1.0
+    source:
+      repo: https://github.com/meije702/GoogleHack26-team15.git
+      sourceType: git
+    description:
+      tagline: AI-powered marketing agency with multi-agent orchestration on Google Cloud
+      detailed: |
+        An intelligent marketing platform built with Google Agent Development Kit (ADK)
+        and Gemini 2.5 Flash, deployed on Cloud Run. Three specialized AI agents
+        collaborate to deliver end-to-end marketing automation:
+
+        **1. Onboarding Agent** — Conversational business intake that collects
+        company details, products, audience, budget, and goals through natural
+        dialogue. Includes legal compliance screening for marketing channels.
+
+        **2. Content Creator Agent** — Generates platform-optimized marketing
+        content (Instagram, LinkedIn, Twitter, blog, email, YouTube) with
+        tone control, hashtag strategy, and automated content calendar planning.
+
+        **3. Interaction Analysis Agent** — Monitors Instagram engagement metrics,
+        analyzes post performance, manages community responses, and provides
+        data-driven recommendations to improve reach and conversion.
+
+        All agents are orchestrated by a root agent that intelligently routes
+        requests to the right specialist based on user intent.
+      architecture:
+        - Cloud Run (backend + frontend)
+        - Artifact Registry (container images)
+        - Vertex AI / Gemini 2.5 Flash (LLM)
+        - Google ADK (agent framework)
+    deploymentDuration:
+      configurationSecs: 60
+      deploymentSecs: 300
+    costEstimate:
+      description: Estimated monthly cost at minimal usage
+      url: https://cloud.google.com/products/calculator
+    icon: https://www.gstatic.com/pantheon/images/solutions/marketing_ai_icon.png
+  content:
+    architecture:
+      diagramUrl: ""
+      description:
+        - User interacts with the Next.js frontend hosted on Cloud Run
+        - Frontend proxies API requests to the FastAPI backend on Cloud Run
+        - Backend runs Google ADK agents powered by Gemini 2.5 Flash via Vertex AI
+        - Three specialized agents handle onboarding, content creation, and interaction analysis
+        - A root orchestrator agent routes requests to the appropriate specialist
+    documentation:
+      - title: Architecture Overview
+        url: https://github.com/meije702/GoogleHack26-team15#readme
+    subBlueprints: []
+    examples: []
+  interfaces:
+    variables:
+      - name: project_id
+        varType: string
+        description: GCP project ID
+        required: true
+      - name: region
+        varType: string
+        description: GCP region for Cloud Run services
+        defaultValue: us-central1
+        required: false
+    outputs:
+      - name: backend_url
+        description: Cloud Run backend service URL
+      - name: frontend_url
+        description: Cloud Run frontend service URL
+      - name: artifact_registry
+        description: Artifact Registry repository path
+  requirements:
+    roles:
+      - level: Project
+        roles:
+          - roles/run.admin
+          - roles/artifactregistry.admin
+          - roles/iam.serviceAccountAdmin
+          - roles/iam.serviceAccountUser
+          - roles/resourcemanager.projectIamAdmin
+          - roles/serviceusage.serviceUsageAdmin
+          - roles/aiplatform.user
+    services:
+      - run.googleapis.com
+      - artifactregistry.googleapis.com
+      - aiplatform.googleapis.com
+      - cloudbuild.googleapis.com
