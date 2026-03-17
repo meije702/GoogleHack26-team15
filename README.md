@@ -6,6 +6,8 @@ An AI-powered marketing agency that automates business onboarding, strategy crea
 
 **[View in Application Design Center](https://console.cloud.google.com/products/design-center/template/us-central1/default-space/marketing-agency-1?project=qwiklabs-asl-01-964394115550)**
 
+**[Live Demo](https://marketing-frontend-302286011439.us-central1.run.app/)**
+
 ## Demo
 
 | Page | Description |

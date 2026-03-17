@@ -7,9 +7,9 @@ RUN npm install
 
 COPY . .
 
-# At build time we don't know the backend URL yet, so leave empty.
-# The rewrites use BACKEND_URL from the runtime environment.
-ENV NEXT_PUBLIC_API_URL=""
+# NEXT_PUBLIC_* vars are inlined at build time by Next.js
+ARG NEXT_PUBLIC_API_URL=""
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NEXT_PUBLIC_WS_URL=""
 
 RUN npm run build

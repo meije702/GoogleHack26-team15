@@ -42,33 +42,6 @@ jobs:
           docker push "${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
           docker push "${{ env.BACKEND_IMAGE }}:latest"
 
-  build-frontend:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: auth
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-
-      - uses: google-github-actions/setup-gcloud@v2
-
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev" --quiet
-
-      - name: Build and push frontend image
-        run: |
-          docker build -t "${{ env.FRONTEND_IMAGE }}:${{ github.sha }}" \
-                        -t "${{ env.FRONTEND_IMAGE }}:latest" \
-                        ./frontend
-          docker push "${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
-          docker push "${{ env.FRONTEND_IMAGE }}:latest"
-
   # -----------------------------------------------------------
   # 2. Deploy backend to Cloud Run
   # -----------------------------------------------------------
@@ -112,17 +85,34 @@ jobs:
   # 3. Deploy frontend to Cloud Run (depends on backend URL)
   # -----------------------------------------------------------
   deploy-frontend:
-    needs: [build-frontend, deploy-backend]
+    needs: [build-backend, deploy-backend]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@v4
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
           service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev" --quiet
+
+      - name: Build and push frontend image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend_url }} \
+            -t "${{ env.FRONTEND_IMAGE }}:${{ github.sha }}" \
+            -t "${{ env.FRONTEND_IMAGE }}:latest" \
+            ./frontend
+          docker push "${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
+          docker push "${{ env.FRONTEND_IMAGE }}:latest"
 
       - id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
@@ -136,9 +126,6 @@ jobs:
             --cpu=1
             --min-instances=0
             --max-instances=5
-          env_vars: |
-            BACKEND_URL=${{ needs.deploy-backend.outputs.backend_url }}
-            NEXT_PUBLIC_API_URL=${{ needs.deploy-backend.outputs.backend_url }}
 
       - name: Print frontend URL
         run: echo "Frontend URL ${{ steps.deploy.outputs.url }}"
