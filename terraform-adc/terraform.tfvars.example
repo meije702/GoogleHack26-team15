@@ -1,0 +1,4 @@
+# ADC template variables — set these when deploying via Infrastructure Manager
+apphub_project_id     = "qwiklabs-asl-01-964394115550"
+apphub_location       = "us-central1"
+apphub_application_id = "marketing-agency-1"

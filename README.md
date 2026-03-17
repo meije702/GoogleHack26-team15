@@ -4,6 +4,8 @@
 
 An AI-powered marketing agency that automates business onboarding, strategy creation, content generation, and social media management. Built with **Google ADK** (Agent Development Kit), **Gemini Live Native Audio** for real-time voice conversations, and **Vertex AI** on Google Cloud.
 
+**[View in Application Design Center](https://console.cloud.google.com/products/design-center/template/us-central1/default-space/marketing-agency-1?project=qwiklabs-asl-01-964394115550)**
+
 ## Demo
 
 | Page | Description |
@@ -15,32 +17,45 @@ An AI-powered marketing agency that automates business onboarding, strategy crea
 
 ## Architecture
 
+### GCP Application Design Center (ADC)
+
+![ADC Architecture](docs/adc-architecture.png)
+
+**Cloud Run Services:**
+| Service | Role |
+|---------|------|
+| **API Gateway** | Routes traffic to all agent services via internal load balancer |
+| **Onboarding Agent** | Business intake with voice AI, delegates to Legal Agent |
+| **Content Creator Agent** | Multi-platform content generation and calendar planning |
+| **Integration Analysis Agent** | Engagement metrics, post analysis, and optimization |
+| **Legal Agent** | Compliance checking (GDPR, CAN-SPAM, TCPA, FTC) |
+| **Instagram Connector** | Instagram API integration with Secret Manager |
+| **A2A Agent 1 & 2** | Agent-to-agent communication bridges via Vertex AI |
+
+**Infrastructure:** Global Load Balancer + Cloud Armor + VPC + Prometheus monitoring
+
 ```
-┌─────────────────────────────────────────────────────┐
-│                 Next.js Frontend                     │
-│         React 19 · TypeScript · Tailwind CSS        │
-│              http://localhost:3000                   │
-└────────────────────┬────────────────────────────────┘
-                     │ REST + WebSocket
-┌────────────────────▼────────────────────────────────┐
-│               FastAPI Backend                        │
-│              http://localhost:8000                   │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────┐ │
-│  │  Onboarding  │  │   Strategy   │  │  Content   │ │
-│  │    Agent     │  │    Agent     │  │   Agent    │ │
-│  │  (Voice AI)  │  │ (Search/SWOT)│  │ (Calendar) │ │
-│  └──────────────┘  └──────────────┘  └────────────┘ │
-│                                                      │
-│  ┌──────────────────────────────────────────────────┐│
-│  │           Instagram Multi-Agent                  ││
-│  │  Research · Posting · Engagement                 ││
-│  └──────────────────────────────────────────────────┘│
-│                                                      │
-│  Voice: gemini-live-2.5-flash-native-audio           │
-│  Text:  gemini-2.5-flash (Vertex AI)                 │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│              Global Load Balancer + Cloud Armor           │
+└────────────────────────┬─────────────────────────────────┘
+                         │
+              ┌──────────▼──────────┐
+              │   API Gateway       │
+              │   (Cloud Run)       │
+              └──┬───┬───┬───┬───┬──┘
+                 │   │   │   │   │
+    ┌────────────┘   │   │   │   └────────────┐
+    ▼                ▼   │   ▼                ▼
+┌──────────┐  ┌─────────┐│┌──────────┐  ┌──────────────┐
+│Onboarding│  │ Content ││ │Instagram │  │ Integration  │
+│  Agent   │  │ Creator ││ │Connector │  │  Analysis    │
+└────┬─────┘  └─────────┘│ └──────────┘  └──────────────┘
+     │                    │
+     ▼                    ▼
+┌──────────┐   ┌────────────────┐
+│  Legal   │   │ A2A Agent 1&2  │
+│  Agent   │   │  (Vertex AI)   │
+└──────────┘   └────────────────┘
 ```
 
 ## Tech Stack
@@ -53,7 +68,29 @@ An AI-powered marketing agency that automates business onboarding, strategy crea
 | Backend | Python 3.12 · FastAPI · WebSockets |
 | Frontend | Next.js 15 · React 19 · TypeScript · Tailwind CSS |
 | Auth | GCP Service Account · Vertex AI |
-| Infra | Docker Compose · Google Cloud |
+| Infra | Cloud Run · Global LB · Cloud Armor · Terraform · GitHub Actions CI/CD |
+
+## Deployment
+
+### Cloud Run (Production)
+
+The project deploys to **Google Cloud Run** via GitHub Actions CI/CD. On every push to `main`:
+
+1. Docker images are built and pushed to Artifact Registry
+2. Backend is deployed to Cloud Run with Vertex AI access
+3. Frontend is deployed to Cloud Run with backend URL injected
+
+**Required GitHub Secrets:**
+
+| Secret | Value |
+|--------|-------|
+| `GCP_PROJECT_ID` | Your GCP project ID |
+| `WIF_PROVIDER` | Workload Identity Federation provider |
+| `WIF_SERVICE_ACCOUNT` | GitHub Actions service account email |
+
+### ADC Template (Full Architecture)
+
+The `terraform-adc/` directory contains the Terraform exported from [Application Design Center](https://console.cloud.google.com/products/design-center/template/us-central1/default-space/marketing-agency-1?project=qwiklabs-asl-01-964394115550) with the full production architecture including load balancer, Cloud Armor, VPC, and all agent microservices.
 
 ## Key Features
 
@@ -62,6 +99,23 @@ An AI-powered marketing agency that automates business onboarding, strategy crea
 - **Google Search Grounding** — Strategy agent uses live web data for market research
 - **Legal Compliance Check** — Onboarding agent validates marketing regulations by country
 - **Mock Instagram** — Full Instagram-style UI for demo with AI-powered content creation
+
+## Security & Compliance
+
+### Cloud Armor Protection
+
+The Onboarding Agent is protected by **Google Cloud Armor** (Model Armor) to prevent illegal or fraudulent businesses from using the platform. Requests are screened before reaching the agent, blocking attempts by prohibited businesses to market illicit products or services.
+
+### Legal Agent — Country-Specific Compliance
+
+The Onboarding Agent delegates to a dedicated **Legal Agent** that verifies marketing legality per country:
+
+- Contacts the relevant **country marketing regulatory agency** to check whether the business and its products are legally allowed to be marketed in that jurisdiction
+- Validates compliance with **GDPR** (EU), **CAN-SPAM** (US), **TCPA** (US SMS), **FTC** advertising guidelines, and country-specific regulations
+- Flags businesses operating in restricted industries (tobacco, gambling, pharmaceuticals) that require special marketing permits
+- Returns actionable compliance recommendations before any marketing campaign is launched
+
+This ensures that only legitimate businesses with legal products can onboard and use the marketing agency's AI agents.
 
 ## Quick Start
 
@@ -115,9 +169,9 @@ uvicorn app.main:app --reload --port 8000
 cd frontend && npm run dev
 ```
 
-Open **http://localhost:3000**
+Open the frontend URL shown in the deploy output.
 
-### Docker
+### Docker (Local Development)
 
 ```bash
 docker compose up --build
@@ -164,7 +218,18 @@ docker compose up --build
 │   ├── src/lib/                      # API client + utilities
 │   ├── package.json
 │   └── Dockerfile
-├── docker-compose.yml
+├── terraform-adc/                    # ADC-exported Terraform (production)
+│   ├── main.tf                       # All Cloud Run modules + LB + Cloud Armor
+│   ├── outputs.tf                    # Service URIs + LB IPs
+│   ├── providers.tf                  # Google provider config
+│   ├── variables.tf                  # AppHub variables
+│   └── adc-infra-design.png          # **Architecture diagram from ADC**
+├── .github/workflows/
+│   └── deploy.yml                    # GitHub Actions CI/CD pipeline
+├── docs/
+│   └── adc-architecture.png          # Architecture diagram for README
+├── deploy.sh                         # Manual deploy script
+├── docker-compose.yml                # Local development
 └── README.md
 ```
 
