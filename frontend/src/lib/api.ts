@@ -103,7 +103,9 @@ export async function healthCheck(): Promise<{
 }
 
 export function createOnboardingWebSocket(): WebSocket {
-  const wsUrl =
-    process.env.NEXT_PUBLIC_WS_URL || `ws://${typeof window !== "undefined" ? window.location.host : ""}`;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  const wsUrl = apiUrl
+    ? apiUrl.replace(/^https:\/\//, "wss://").replace(/^http:\/\//, "ws://")
+    : `wss://${typeof window !== "undefined" ? window.location.host : ""}`;
   return new WebSocket(`${wsUrl}/api/voice/onboarding`);
 }

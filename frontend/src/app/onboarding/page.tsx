@@ -133,7 +133,10 @@ export default function OnboardingPage() {
 
   // --- WebSocket ---
   const connect = useCallback(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `ws://${window.location.host}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    const wsUrl = apiUrl
+      ? apiUrl.replace(/^https:\/\//, "wss://").replace(/^http:\/\//, "ws://")
+      : `wss://${window.location.host}`;
     const ws = new WebSocket(`${wsUrl}/api/voice/onboarding`);
     wsRef.current = ws;
 
