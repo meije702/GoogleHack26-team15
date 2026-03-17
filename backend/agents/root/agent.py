@@ -16,19 +16,19 @@ from google.adk.agents import Agent
 from google.adk.agents.remote_agent import RemoteA2aAgent
 
 onboarding_remote = RemoteA2aAgent(
-    agent_card_url=os.environ["ONBOARDING_AGENT_URL"] + "/.well-known/agent.json",
+    agent_card_url=os.environ.get("ONBOARDING_AGENT_URL", "") + "/.well-known/agent.json",
 )
 
 strategy_remote = RemoteA2aAgent(
-    agent_card_url=os.environ["STRATEGY_AGENT_URL"] + "/.well-known/agent.json",
+    agent_card_url=os.environ.get("STRATEGY_AGENT_URL", "") + "/.well-known/agent.json",
 )
 
 content_remote = RemoteA2aAgent(
-    agent_card_url=os.environ["CONTENT_AGENT_URL"] + "/.well-known/agent.json",
+    agent_card_url=os.environ.get("CONTENT_AGENT_URL", "") + "/.well-known/agent.json",
 )
 
 instagram_remote = RemoteA2aAgent(
-    agent_card_url=os.environ["INSTAGRAM_AGENT_URL"] + "/.well-known/agent.json",
+    agent_card_url=os.environ.get("INSTAGRAM_AGENT_URL", "") + "/.well-known/agent.json",
 )
 
 root_agent = Agent(
