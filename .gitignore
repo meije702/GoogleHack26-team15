@@ -98,4 +98,14 @@ tmp/
 temp/
 *.bak
 *.tmp
+
+# ========================
+# Terraform
+# ========================
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+terraform.tfvars
+!terraform.tfvars.example
 *.pid

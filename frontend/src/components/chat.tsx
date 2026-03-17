@@ -74,7 +74,7 @@ export function Chat({
           {
             role: "assistant",
             content:
-              "I'm having trouble connecting to the backend. Please make sure the server is running at localhost:8000.",
+              "I'm having trouble connecting to the backend. Please check that the server is running.",
             timestamp: new Date(),
           },
         ]);
